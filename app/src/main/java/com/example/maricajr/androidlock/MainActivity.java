@@ -2,29 +2,30 @@ package com.example.maricajr.androidlock;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.provider.ContactsContract;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
-    public static final int RESULT_ENABLE = 11;
+    private static final int RESULT_ENABLE = 11;
     private DevicePolicyManager devicePolicyManager;
-    private ActivityManager activityManager;
     private ComponentName compName;
+    private KeyguardManager keyguardManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
 
         devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-        activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         compName = new ComponentName(getApplicationContext(), Administrator.class);
+        keyguardManager= (KeyguardManager) this.getSystemService(Context.KEYGUARD_SERVICE);
 
         boolean active = devicePolicyManager.isAdminActive(compName);
 
@@ -33,11 +34,10 @@ public class MainActivity extends Activity {
             Intent data=getIntent();
             String value=data.getStringExtra("unlock");
             if (value != null){
-                finish();
+               //unlocked do maricajr
             }else {
                 lockDevice();
             }
-
 
         }else {
             enableLockAdminPermission();
@@ -57,12 +57,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
 
             case RESULT_ENABLE :
                 if (resultCode == Activity.RESULT_OK) {
-
                     lockDevice();
 
                 } else {
@@ -74,11 +73,16 @@ public class MainActivity extends Activity {
 
         }
 
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void lockDevice() {
         devicePolicyManager.lockNow();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            if (keyguardManager.isDeviceLocked()){
+                finish();
+            }
+        }
+        finish();
     }
 
 }
